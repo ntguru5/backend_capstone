@@ -4,109 +4,35 @@ const dogSchema = new Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
-    trim: true,
-    minLength: [2, 'Name must be at least 2 characters long'],
-    maxLength: [30, 'Name must be less than 30 characters long'],
+    minLength: [3, 'Name must be at least 3 characters long'],
+    maxLength: [20, 'Name must be less than 20 characters long'],
     index: true
   },
   breed: {
     type: String,
-    required: [true, 'Breed is required'],
-    trim: true,
-    index: true
+    required: [true, 'Breed is required']
   },
   age: {
     type: Number,
-    min: [0, 'Age cannot be negative'],
-    max: [30, 'Age seems unrealistic'],
-    validate: {
-      validator: Number.isInteger,
-      message: 'Age must be a whole number'
-    }
+    min: [0, 'Age must be greater than or equal to 0']
   },
   weight: {
     type: Number,
-    min: [0.1, 'Weight must be greater than 0'],
-    max: [200, 'Weight seems unrealistic'],
-    required: [true, 'Weight is required']
-  },
-  ownerName: {
-    type: String,
-    required: [true, 'Owner Name is required'],
-    index: true
+    min: 0
   },
   gender: {
     type: String,
     enum: ['male', 'female'],
     required: [true, 'Gender is required']
   },
-  isVaccinated: {
-    type: Boolean,
-    default: false
+  ownerName: {
+    type: String,
+    required: [true, 'Owner Name is required']
   },
-  medicalHistory: [{
-    date: Date,
-    description: String,
-    veterinarian: String
-  }],
-  photos: [{
-    url: String,
-    isDefault: Boolean
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    immutable: true
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  imageUrl: {
+    type: String,
+    default: 'https://cdn2.iconfinder.com/data/icons/veterinary-12/512/Veterinary_Icons-16-512.png'
   }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
 });
 
-// Indexes for common queries
-dogSchema.index({ breed: 1, age: 1 });
-dogSchema.index({ 'medicalHistory.date': 1 });
-
-// Virtual for dog's age in human years
-dogSchema.virtual('humanAge').get(function() {
-  return this.age * 7;
-});
-
-// Pre-save middleware to update timestamps
-dogSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
-
-// Instance method to check if dog needs vaccination
-dogSchema.methods.needsVaccination = function() {
-  if (!this.isVaccinated) return true;
-
-  const lastVaccination = this.medicalHistory
-    .filter(record => record.description.includes('vaccination'))
-    .sort((a, b) => b.date - a.date)[0];
-
-  if (!lastVaccination) return true;
-
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-  return lastVaccination.date < oneYearAgo;
-};
-
-// Static method to find dogs by breed
-dogSchema.statics.findByBreed = function(breed) {
-  return this.find({ breed: new RegExp(breed, 'i') });
-};
-
-const Dog = model("Dog", dogSchema);
-
-// Create indexes
-Dog.createIndexes();
-
-export default Dog;
+export default model("Dog", dogSchema);
