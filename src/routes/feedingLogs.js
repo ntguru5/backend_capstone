@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import Feeding from '../models/Feeding';
+import Feeding from '../models/Feeding.js';
 
 // GET feeding metrics for a specific dog
 router.get('/:dogId', async (req, res) => {
@@ -33,7 +33,7 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-// DELETE health metric by ID
+// DELETE feeding metric by ID
 router.delete('/:id', async (req, res) => {
   try {
     const deletedMetric = await Feeding.findByIdAndDelete(req.params.id);
