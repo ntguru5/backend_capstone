@@ -30,10 +30,9 @@ const dogSchema = new Schema({
     max: [200, 'Weight seems unrealistic'],
     required: [true, 'Weight is required']
   },
-  ownerId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Owner ID is required'],
+  ownerName: {
+    type: String,
+    required: [true, 'Owner Name is required'],
     index: true
   },
   gender: {
