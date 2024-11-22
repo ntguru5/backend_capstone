@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Middleware to validate MongoDB ObjectId
 const validateObjectId = async (req, res, next) => {
-  const id = req.params.id || req.params.dogId;
+  const id = req.params.id;
   if (!id?.match(/^[0-9a-fA-F]{24}$/)) {
     return res.status(400).json({
       success: false,
@@ -98,7 +98,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // GET all bathroom logs for a specific dog
-router.get('/:dogId', validateObjectId, async (req, res) => {
+router.get('/:id', validateObjectId, async (req, res) => {
   try {
     const {
       startDate,
@@ -109,7 +109,8 @@ router.get('/:dogId', validateObjectId, async (req, res) => {
       sort = '-date'
     } = req.query;
 
-    const query = { dogId: req.params.dogId };
+    // query parameter dogId refers to the id of the dog
+    const query = { dogId: req.params.id };
 
     if (startDate || endDate) {
       query.date = {};
