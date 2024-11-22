@@ -15,7 +15,89 @@ const validateObjectId = async (req, res, next) => {
   next();
 };
 
-// GET all bathroom logs for a specific dog with filtering and pagination
+// GET bathroom stats for dashboard
+router.get('/stats', async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const logs = await BathroomLog.find({
+      date: { $gte: sevenDaysAgo }
+    }).sort('date');
+
+    const dailyCounts = {
+      pee: new Array(7).fill(0),
+      poop: new Array(7).fill(0)
+    };
+
+    const times = {
+      pee: [],
+      poop: []
+    };
+
+    const consistencyCounts = {
+      normal: 0,
+      soft: 0,
+      hard: 0
+    };
+
+    const labels = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+    }
+
+    logs.forEach(log => {
+      const dayIndex = 6 - Math.floor((new Date() - log.date) / (1000 * 60 * 60 * 24));
+      if (dayIndex >= 0 && dayIndex < 7) {
+        if (log.type === 'pee' || log.type === 'both') {
+          dailyCounts.pee[dayIndex]++;
+          times.pee.push(log.date);
+        }
+        if (log.type === 'poop' || log.type === 'both') {
+          dailyCounts.poop[dayIndex]++;
+          times.poop.push(log.date);
+          if (log.consistency) {
+            consistencyCounts[log.consistency]++;
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        pee: {
+          data: dailyCounts.pee,
+          labels,
+          times: times.pee
+        },
+        poop: {
+          data: dailyCounts.poop,
+          labels,
+          times: times.poop
+        },
+        consistency: {
+          data: [
+            consistencyCounts.normal,
+            consistencyCounts.soft,
+            consistencyCounts.hard
+          ],
+          labels: ['Normal', 'Soft', 'Hard']
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching bathroom stats',
+      error: err.message
+    });
+  }
+});
+
+// GET all bathroom logs for a specific dog
 router.get('/:dogId', validateObjectId, async (req, res) => {
   try {
     const {
@@ -29,22 +111,16 @@ router.get('/:dogId', validateObjectId, async (req, res) => {
 
     const query = { dogId: req.params.dogId };
 
-    // Add date range filter if provided
     if (startDate || endDate) {
       query.date = {};
       if (startDate) query.date.$gte = new Date(startDate);
       if (endDate) query.date.$lte = new Date(endDate);
     }
 
-    // Add type filter if provided
     if (type) query.type = type;
 
     const skip = (Number(page) - 1) * Number(limit);
-
-    // Get total count for pagination
     const total = await BathroomLog.countDocuments(query);
-
-    // Execute query with pagination and sorting
     const logs = await BathroomLog.find(query)
       .sort(sort)
       .skip(skip)
@@ -73,7 +149,6 @@ router.post('/', async (req, res) => {
   try {
     const { dogId, type, date, notes, consistency, color } = req.body;
 
-    // Validate required fields
     if (!dogId || !type) {
       return res.status(400).json({
         success: false,
@@ -81,7 +156,6 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Create new log
     const log = new BathroomLog({
       dogId,
       type,
@@ -92,8 +166,6 @@ router.post('/', async (req, res) => {
     });
 
     const newLog = await log.save();
-
-    // Populate dog information
     await newLog.populate('dogId', 'name breed');
 
     res.status(201).json({
@@ -109,14 +181,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH update bathroom log by ID
+// PATCH update bathroom log
 router.patch('/:id', validateObjectId, async (req, res) => {
   try {
     const updates = req.body;
-    const options = {
-      new: true,
-      runValidators: true
-    };
+    const options = { new: true, runValidators: true };
 
     const updatedLog = await BathroomLog.findByIdAndUpdate(
       req.params.id,
@@ -144,7 +213,7 @@ router.patch('/:id', validateObjectId, async (req, res) => {
   }
 });
 
-// DELETE a bathroom log by ID
+// DELETE bathroom log
 router.delete('/:id', validateObjectId, async (req, res) => {
   try {
     const deletedLog = await BathroomLog.findByIdAndDelete(req.params.id);
