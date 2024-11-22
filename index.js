@@ -17,9 +17,9 @@ app.get("/", (req, res) => {
   res.send("Welcome to the API.");
 });
 
-app.use('/dogs', dogRoutes);
-app.use('/bathroom-logs', bathroomLogRoutes);
-app.use('/feeding', FeedingRoutes);
+app.use('/api/dogs', dogRoutes);
+app.use('/api/bathroom-logs', bathroomLogRoutes);
+app.use('/api/feeding', FeedingRoutes);
 
 // start server
 app.listen(PORT, () => {
