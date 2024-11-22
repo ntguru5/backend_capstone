@@ -22,14 +22,6 @@ const feedingSchema = new Schema({
       message: 'Amount must be a valid number'
     }
   },
-  calories: {
-    type: Number,
-    min: [0, 'Calories cannot be negative'],
-    validate: {
-      validator: Number.isFinite,
-      message: 'Calories must be a valid number'
-    }
-  },
   date: {
     type: Date,
     default: Date.now,
