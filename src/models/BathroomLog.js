@@ -2,9 +2,9 @@ import { Schema, model } from "mongoose";
 
 const bathroomLogSchema = new Schema({
   dogId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'Dog',
-    required: [true, 'Dog ID is required'],
+    // required: [true, 'Dog ID is required'],
     index: true
   },
   type: {
@@ -38,24 +38,6 @@ const bathroomLogSchema = new Schema({
     trim: true,
     maxLength: [500, 'Notes cannot be longer than 500 characters']
   },
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point'
-    },
-    coordinates: {
-      type: [Number],
-      validate: {
-        validator: function(v) {
-          return v.length === 2 &&
-            v[0] >= -180 && v[0] <= 180 &&
-            v[1] >= -90 && v[1] <= 90;
-        },
-        message: 'Invalid coordinates'
-      }
-    }
-  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -73,7 +55,6 @@ const bathroomLogSchema = new Schema({
 
 // Indexes
 bathroomLogSchema.index({ dogId: 1, date: -1 });
-bathroomLogSchema.index({ location: '2dsphere' });
 
 // Virtual populate for dog information
 bathroomLogSchema.virtual('dog', {
