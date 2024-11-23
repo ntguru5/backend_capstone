@@ -84,7 +84,7 @@ router.get('/:dogId', validateObjectId, async (req, res) => {
 // POST create a new feeding metric
 router.post('/', async (req, res) => {
   try {
-    const { dogId, foodType, amount, calories, date, notes } = req.body;
+    const { dogId, foodType, amount, date, mealTime } = req.body;
 
     // Validate required fields
     if (!dogId || !foodType || !amount) {
@@ -99,9 +99,8 @@ router.post('/', async (req, res) => {
       dogId,
       foodType,
       amount,
-      calories,
       date: date || new Date(),
-      notes
+      mealTime
     });
 
     const newMetric = await metric.save();

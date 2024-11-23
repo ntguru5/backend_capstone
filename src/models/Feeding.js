@@ -2,9 +2,9 @@ import { Schema, model } from "mongoose";
 
 const feedingSchema = new Schema({
   dogId: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'Dog',
-    required: [true, 'Dog ID is required'],
+    // required: [true, 'Dog ID is required'],
     index: true
   },
   foodType: {
@@ -75,36 +75,6 @@ feedingSchema.pre('save', function(next) {
   this.updatedAt = new Date();
   next();
 });
-
-// Instance method to get daily total calories
-feedingSchema.methods.getDailyCalories = async function() {
-  const startOfDay = new Date(this.date);
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date(this.date);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const dailyMetrics = await this.model('Feeding').aggregate([
-    {
-      $match: {
-        dogId: this.dogId,
-        date: {
-          $gte: startOfDay,
-          $lte: endOfDay
-        }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalCalories: { $sum: '$calories' },
-        totalAmount: { $sum: '$amount' }
-      }
-    }
-  ]);
-
-  return dailyMetrics[0] || { totalCalories: 0, totalAmount: 0 };
-};
 
 const Feeding = model('Feeding', feedingSchema);
 
