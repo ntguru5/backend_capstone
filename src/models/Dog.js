@@ -31,7 +31,7 @@ const dogSchema = new Schema({
   },
   imageUrl: {
     type: String,
-    default: 'https://cdn2.iconfinder.com/data/icons/veterinary-12/512/Veterinary_Icons-16-512.png'
+    default: 'https://cdn.pixabay.com/photo/2024/03/28/18/06/dog-8661433_1280.png'
   }
 });
 
