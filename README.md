@@ -7,7 +7,6 @@ A RESTful API for managing pet care activities including pet profiles, bathroom 
 - 🐕 Pet Profile Management
 - 🚽 Bathroom Activity Tracking
 - 🍽️ Feeding Schedule Management
-- 📊 Activity Statistics
 - 🔒 Data Validation
 - 📝 Detailed Logging
 
