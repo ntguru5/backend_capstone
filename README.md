@@ -17,6 +17,9 @@ A RESTful API for managing pet care activities including pet profiles, bathroom 
 - MongoDB with Mongoose
 - Axios for HTTP requests
 
+## External API
+- Random Dog image from [Dog CEO](https://dog.ceo/dog-api/).
+
 ## Prerequisites
 
 - Node.js
