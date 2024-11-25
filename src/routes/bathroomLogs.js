@@ -25,14 +25,10 @@ router.get('/stats', async (req, res) => {
       date: { $gte: sevenDaysAgo }
     }).sort('date');
 
+    // Initialize data structure
     const dailyCounts = {
       pee: new Array(7).fill(0),
       poop: new Array(7).fill(0)
-    };
-
-    const times = {
-      pee: [],
-      poop: []
     };
 
     const consistencyCounts = {
@@ -41,23 +37,22 @@ router.get('/stats', async (req, res) => {
       hard: 0
     };
 
-    const labels = [];
-    for (let i = 0; i < 7; i++) {
+    // Generate labels for the last 7 days
+    const labels = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
-      labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
-    }
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    });
 
+    // Process logs
     logs.forEach(log => {
       const dayIndex = 6 - Math.floor((new Date() - log.date) / (1000 * 60 * 60 * 24));
       if (dayIndex >= 0 && dayIndex < 7) {
         if (log.type === 'pee' || log.type === 'both') {
           dailyCounts.pee[dayIndex]++;
-          times.pee.push(log.date);
         }
         if (log.type === 'poop' || log.type === 'both') {
           dailyCounts.poop[dayIndex]++;
-          times.poop.push(log.date);
           if (log.consistency) {
             consistencyCounts[log.consistency]++;
           }
@@ -70,13 +65,11 @@ router.get('/stats', async (req, res) => {
       data: {
         pee: {
           data: dailyCounts.pee,
-          labels,
-          times: times.pee
+          labels
         },
         poop: {
           data: dailyCounts.poop,
-          labels,
-          times: times.poop
+          labels
         },
         consistency: {
           data: [
@@ -97,43 +90,12 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// GET all bathroom logs for a specific dog
-router.get('/:id', validateObjectId, async (req, res) => {
+// GET all bathroom logs
+router.get('/', async (req, res) => {
   try {
-    const {
-      startDate,
-      endDate,
-      type,
-      limit = 10,
-      page = 1,
-      sort = '-date'
-    } = req.query;
-
-    // query parameter dogId refers to the id of the dog
-    const query = { dogId: req.params.id };
-
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
-    }
-
-    if (type) query.type = type;
-
-    const skip = (Number(page) - 1) * Number(limit);
-    const total = await BathroomLog.countDocuments(query);
-    const logs = await BathroomLog.find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(Number(limit))
-      .populate('dogId', 'name breed');
-
+    const logs = await BathroomLog.find().sort('-date');
     res.json({
       success: true,
-      count: logs.length,
-      total,
-      pages: Math.ceil(total / Number(limit)),
-      currentPage: Number(page),
       data: logs
     });
   } catch (err) {
@@ -148,17 +110,16 @@ router.get('/:id', validateObjectId, async (req, res) => {
 // POST create a new bathroom log
 router.post('/', async (req, res) => {
   try {
-    const { dogId, type, date, notes, consistency, color } = req.body;
+    const { type, date, notes, consistency, color } = req.body;
 
-    if (!dogId || !type) {
+    if (!type) {
       return res.status(400).json({
         success: false,
-        message: 'Dog ID and type are required fields'
+        message: 'Type is required'
       });
     }
 
     const log = new BathroomLog({
-      dogId,
       type,
       date: date || new Date(),
       notes,
@@ -167,7 +128,6 @@ router.post('/', async (req, res) => {
     });
 
     const newLog = await log.save();
-    await newLog.populate('dogId', 'name breed');
 
     res.status(201).json({
       success: true,
@@ -183,7 +143,7 @@ router.post('/', async (req, res) => {
 });
 
 // PATCH update bathroom log
-router.patch('/:id', validateObjectId, async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const updates = req.body;
     const options = { new: true, runValidators: true };
@@ -192,7 +152,7 @@ router.patch('/:id', validateObjectId, async (req, res) => {
       req.params.id,
       { ...updates, updatedAt: new Date() },
       options
-    ).populate('dogId', 'name breed');
+    );
 
     if (!updatedLog) {
       return res.status(404).json({
@@ -215,7 +175,7 @@ router.patch('/:id', validateObjectId, async (req, res) => {
 });
 
 // DELETE bathroom log
-router.delete('/:id', validateObjectId, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const deletedLog = await BathroomLog.findByIdAndDelete(req.params.id);
 
